@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birlikte Kur'an & Meal Okuma Takibi</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Amiri -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Amiri', 'serif'],
+                    },
+                    colors: {
+                        emerald: {
+                            850: '#064e3b',
+                            950: '#022c22',
+                        },
+                        gold: {
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f8fafc;
+            background-image: radial-gradient(#0f766e 0.5px, transparent 0.5px), radial-gradient(#0f766e 0.5px, #f8fafc 0.5px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            background-attachment: fixed;
+        }
+        .bg-overlay {
+            background: linear-gradient(180deg, rgba(248,250,252,0.92) 0%, rgba(248,250,252,0.98) 100%);
+        }
+        .card-shadow {
+            box-shadow: 0 10px 25px -5px rgba(6, 78, 59, 0.08), 0 8px 10px -6px rgba(6, 78, 59, 0.04);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 antialiased selection:bg-emerald-600 selection:text-white">
+    <div class="bg-overlay min-h-screen pb-16">
+        
+        <!-- Üst Bilgi Çubuğu (Header) -->
+        <header class="bg-emerald-900 text-white shadow-lg sticky top-0 z-30 border-b border-emerald-800">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-800 border border-emerald-600 flex items-center justify-center text-gold-400 shadow-inner">
+                        <i class="ph-fill ph-book-open-text text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-serif text-xl sm:text-2xl font-bold tracking-wide text-emerald-50 flex items-center gap-2">
+                            Huzur Hatmi
+                            <span class="text-xs font-sans font-normal bg-emerald-800 text-gold-400 px-2.5 py-0.5 rounded-full border border-emerald-700">Birlikte Okuma</span>
+                        </h1>
+                        <p class="text-xs text-emerald-300" id="headerDateDisplay">Yükleniyor...</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <!-- Gün Simülasyonu / Telafi Butonu -->
+                    <button onclick="openSettingsModal()" class="flex items-center gap-1.5 bg-emerald-800 hover:bg-emerald-700 text-emerald-100 px-3.5 py-2 rounded-xl text-sm font-medium transition border border-emerald-700 shadow-sm active:scale-95">
+                        <i class="ph ph-sliders text-lg text-gold-400"></i>
+                        <span>Meal & Ayarlar</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Ana İçerik Konteyneri -->
+        <main class="max-w-5xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
+
+            <!-- Sistem Kuralları & Uyarı Bandı -->
+            <div id="WarningBanner" class="hidden bg-amber-50 border-l-4 border-amber-500 p-4 rounded-xl shadow-sm flex items-start gap-3">
+                <i class="ph-fill ph-warning-circle text-amber-500 text-xl shrink-0 mt-0.5"></i>
+                <div class="text-sm text-amber-900">
+                    <p class="font-semibold" id="warningTitle">Uyarı</p>
+                    <p id="warningDesc" class="mt-0.5 text-amber-800"></p>
+                </div>
+            </div>
+
+            <!-- Genel Hatim / Meal İlerleme Kartı -->
+            <section class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 card-shadow relative overflow-hidden">
+                <div class="absolute -right-8 -top-8 text-emerald-50 opacity-60 pointer-events-none">
+                    <i class="ph-fill ph-mosque text-9xl"></i>
+                </div>
+
+                <div class="relative z-10">
+                    <div class="flex flex-wrap justify-between items-end gap-4 mb-4">
+                        <div>
+                            <span class="text-xs font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200" id="bookTypeBadge">
+                                Standart Kur'an (606 Sayfa)
+                            </span>
+                            <h2 class="text-xl sm:text-2xl font-bold text-slate-800 mt-2">Genel İlerleme Durumu</h2>
+                            <p class="text-sm text-slate-500 mt-0.5" id="modeExplanationText">
+                                Ortak Hatim Modu: Okuduğunuz her sayfa ortak hedefi ilerletir.
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl sm:text-3xl font-extrabold text-emerald-800">
+                                <span id="totalReadDisplay">0</span>
+                                <span class="text-lg font-normal text-slate-400">/ <span id="totalTargetDisplay">606</span> syf</span>
+                            </div>
+                            <p class="text-xs font-medium text-emerald-600" id="percentageDisplay">%0 Tamamlandı</p>
+                        </div>
+                    </div>
+
+                    <!-- İlerleme Çubuğu -->
+                    <div class="w-full h-4 bg-slate-100 rounded-full overflow-hidden border border-slate-200 p-0.5">
+                        <div id="mainProgressBar" class="h-full bg-gradient-to-r from-emerald-600 via-teal-500 to-gold-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+
+                    <!-- Alt İstatistikler -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-4 border-t border-slate-100">
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <span class="text-xs text-slate-400 block">Başlangıç Tarihi</span>
+                            <span class="text-sm font-semibold text-slate-700 mt-0.5 block" id="statStartDate">-</span>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <span class="text-xs text-slate-400 block">Geçen Süre</span>
+                            <span class="text-sm font-semibold text-slate-700 mt-0.5 block" id="statDaysPassed">1. Gün</span>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <span class="text-xs text-slate-400 block">Kalan Sayfa</span>
+                            <span class="text-sm font-semibold text-emerald-700 mt-0.5 block" id="statRemainingPages">606 Sayfa</span>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <span class="text-xs text-slate-400 block">Tahmini Bitiş</span>
+                            <span class="text-sm font-semibold text-amber-700 mt-0.5 block" id="statEstFinish">-</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Kural Özeti Kutusu -->
+            <div class="bg-emerald-900/95 text-emerald-50 rounded-2xl p-4 sm:px-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-emerald-800 flex items-center justify-center shrink-0 text-gold-400 font-bold border border-emerald-700">
+                        1+2
+                    </div>
+                    <div class="text-xs sm:text-sm">
+                        <span class="font-semibold text-white block">Okuma ve Borç Kuralı Aktif:</span>
+                        Her gün kişi başı <b>1 sayfa</b> okunur. Okunmayan günler ertesi güne borç devreder. En fazla <b>2 gün</b> atlanabilir (Bir günde maksimum <b>3 sayfa</b>: 1 güncel + 2 borç okunabilir).
+                    </div>
+                </div>
+                <button onclick="simulateMissedDay()" class="shrink-0 text-xs bg-emerald-800 hover:bg-emerald-700 text-gold-400 border border-emerald-600 px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 self-end sm:self-center" title="Test veya unutulan günü eklemek için 1 gün ileri sarar">
+                    <i class="ph ph-calendar-plus text-base"></i>
+                    <span>1 Gün Atla / Devret</span>
+                </button>
+            </div>
+
+            <!-- İki Kişilik Takip Kartları (Ben & Kız Arkadaşım) -->
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- 1. KULLANICI KARTI (BEN) -->
+                <div class="bg-white rounded-2xl border border-slate-200/90 card-shadow flex flex-col justify-between overflow-hidden relative">
+                    <div class="h-2 bg-gradient-to-r from-emerald-600 to-teal-500"></div>
+                    <div class="p-5 sm:p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <!-- Kart Başlığı -->
+                            <div class="flex justify-between items-start gap-2">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 font-bold text-xl shadow-sm">
+                                        <i class="ph-fill ph-user"></i>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <h3 class="font-bold text-lg text-slate-800" id="user1NameDisplay">Ben</h3>
+                                            <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-medium">Okuyucu 1</span>
+                                        </div>
+                                        <p class="text-xs text-slate-500 mt-0.5">Toplam Okunan: <strong class="text-slate-700" id="user1TotalRead">0</strong> sayfa</p>
+                                    </div>
+                                </div>
+
+                                <!-- Durum Rozeti -->
+                                <span id="user1StatusBadge" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                                    Bekleniyor
+                                </span>
+                            </div>
+
+                            <!-- Sıradaki Okunacak Sayfa Göstergesi -->
+                            <div class="mt-5 bg-gradient-to-br from-emerald-50/70 to-teal-50/40 border border-emerald-200/80 rounded-xl p-4 flex items-center justify-between">
+                                <div>
+                                    <span class="text-xs uppercase tracking-wider font-semibold text-emerald-700 block">Şu An Okunacak Sayfa</span>
+                                    <span class="text-2xl sm:text-3xl font-serif font-bold text-emerald-950 mt-0.5 block" id="user1NextPage">1. Sayfa</span>
+                                    <span class="text-xs text-emerald-600 mt-0.5 block" id="user1JuzInfo">1. Cüz • Başlangıç</span>
+                                </div>
+                                <div class="w-12 h-12 rounded-xl bg-white border border-emerald-100 flex items-center justify-center text-emerald-600 shadow-sm">
+                                    <i class="ph-duotone ph-book-bookmark text-3xl"></i>
+                                </div>
+                            </div>
+
+                            <!-- Bugünün Kotası ve Borç Durumu (3 Slot) -->
+                            <div class="mt-5">
+                                <div class="flex justify-between items-center text-xs mb-2">
+                                    <span class="font-semibold text-slate-600">Bugünkü Okuma Kotası (Maks 3 Sayfa)</span>
+                                    <span class="font-bold text-emerald-700" id="user1QuotaText">0 / 1 Tamamlandı</span>
+                                </div>
+                                
+                                <!-- 3'lü Slot Gösterimi -->
+                                <div class="grid grid-cols-3 gap-2.5" id="user1SlotsContainer">
+                                    <!-- JS ile doldurulacak -->
+                                </div>
+
+                                <!-- Borç Bilgi Metni -->
+                                <div class="mt-3 flex items-center justify-between text-xs bg-slate-50 px-3 py-2 rounded-lg border border-slate-100">
+                                    <span class="text-slate-500 flex items-center gap-1.5">
+                                        <i class="ph-fill ph-clock-counter-clockwise text-amber-500 text-sm"></i>
+                                        Devreden Borç:
+                                    </span>
+                                    <span class="font-bold text-slate-700" id="user1DebtBadge">0 Sayfa (Borç Yok)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Aksiyon Butonları -->
+                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center gap-2">
+                            <button id="user1ReadBtn" onclick="readPage('user1')" class="flex-1 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white font-semibold py-3 px-4 rounded-xl shadow-md shadow-emerald-700/20 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none">
+                                <i class="ph-bold ph-check-circle text-xl"></i>
+                                <span id="user1ReadBtnText">1 Sayfa Okudum</span>
+                            </button>
+                            <button id="user1UndoBtn" onclick="undoPage('user1')" class="bg-slate-100 hover:bg-slate-200 text-slate-600 p-3 rounded-xl transition disabled:opacity-40 disabled:pointer-events-none" title="Bugünkü son okumayı geri al">
+                                <i class="ph-bold ph-arrow-u-up-left text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. KULLANICI KARTI (KIZ ARKADAŞIM) -->
+                <div class="bg-white rounded-2xl border border-slate-200/90 card-shadow flex flex-col justify-between overflow-hidden relative">
+                    <div class="h-2 bg-gradient-to-r from-rose-500 to-amber-500"></div>
+                    <div class="p-5 sm:p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <!-- Kart Başlığı -->
+                            <div class="flex justify-between items-start gap-2">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 font-bold text-xl shadow-sm">
+                                        <i class="ph-fill ph-heart"></i>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <h3 class="font-bold text-lg text-slate-800" id="user2NameDisplay">Kız Arkadaşım</h3>
+                                            <span class="text-xs bg-rose-100 text-rose-800 px-2 py-0.5 rounded-md font-medium">Okuyucu 2</span>
+                                        </div>
+                                        <p class="text-xs text-slate-500 mt-0.5">Toplam Okunan: <strong class="text-slate-700" id="user2TotalRead">0</strong> sayfa</p>
+                                    </div>
+                                </div>
+
+                                <!-- Durum Rozeti -->
+                                <span id="user2StatusBadge" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                                    Bekleniyor
+                                </span>
+                            </div>
+
+                            <!-- Sıradaki Okunacak Sayfa Göstergesi -->
+                            <div class="mt-5 bg-gradient-to-br from-rose-50/70 to-amber-50/40 border border-rose-200/80 rounded-xl p-4 flex items-center justify-between">
+                                <div>
+                                    <span class="text-xs uppercase tracking-wider font-semibold text-rose-700 block">Şu An Okunacak Sayfa</span>
+                                    <span class="text-2xl sm:text-3xl font-serif font-bold text-rose-950 mt-0.5 block" id="user2NextPage">2. Sayfa</span>
+                                    <span class="text-xs text-rose-600 mt-0.5 block" id="user2JuzInfo">1. Cüz • Başlangıç</span>
+                                </div>
+                                <div class="w-12 h-12 rounded-xl bg-white border border-rose-100 flex items-center justify-center text-rose-500 shadow-sm">
+                                    <i class="ph-duotone ph-book-bookmark text-3xl"></i>
+                                </div>
+                            </div>
+
+                            <!-- Bugünün Kotası ve Borç Durumu (3 Slot) -->
+                            <div class="mt-5">
+                                <div class="flex justify-between items-center text-xs mb-2">
+                                    <span class="font-semibold text-slate-600">Bugünkü Okuma Kotası (Maks 3 Sayfa)</span>
+                                    <span class="font-bold text-rose-700" id="user2QuotaText">0 / 1 Tamamlandı</span>
+                                </div>
+                                
+                                <!-- 3'lü Slot Gösterimi -->
+                                <div class="grid grid-cols-3 gap-2.5" id="user2SlotsContainer">
+                                    <!-- JS ile doldurulacak -->
+                                </div>
+
+                                <!-- Borç Bilgi Metni -->
+                                <div class="mt-3 flex items-center justify-between text-xs bg-slate-50 px-3 py-2 rounded-lg border border-slate-100">
+                                    <span class="text-slate-500 flex items-center gap-1.5">
+                                        <i class="ph-fill ph-clock-counter-clockwise text-amber-500 text-sm"></i>
+                                        Devreden Borç:
+                                    </span>
+                                    <span class="font-bold text-slate-700" id="user2DebtBadge">0 Sayfa (Borç Yok)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Aksiyon Butonları -->
+                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center gap-2">
+                            <button id="user2ReadBtn" onclick="readPage('user2')" class="flex-1 bg-rose-600 hover:bg-rose-700 active:scale-[0.99] text-white font-semibold py-3 px-4 rounded-xl shadow-md shadow-rose-600/20 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none">
+                                <i class="ph-bold ph-check-circle text-xl"></i>
+                                <span id="user2ReadBtnText">1 Sayfa Okudum</span>
+                            </button>
+                            <button id="user2UndoBtn" onclick="undoPage('user2')" class="bg-slate-100 hover:bg-slate-200 text-slate-600 p-3 rounded-xl transition disabled:opacity-40 disabled:pointer-events-none" title="Bugünkü son okumayı geri al">
+                                <i class="ph-bold ph-arrow-u-up-left text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Manuel Borç Yönetimi & Hızlı Müdahale Çubuğu -->
+            <section class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 card-shadow flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
+                        <i class="ph-fill ph-scales text-xl"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-800">Borç & Gün Düzeltme Araçları</h4>
+                        <p class="text-xs text-slate-500">Uygulamaya girmeyi unuttuğunuz günler için borç sayısını manuel ayarlayabilirsiniz (Maksimum 2 borç).</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1 text-xs">
+                        <span class="px-2 font-semibold text-slate-600" id="quickDebtName1">Ben:</span>
+                        <button onclick="adjustDebt('user1', -1)" class="w-7 h-7 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 font-bold text-slate-700">-</button>
+                        <span class="px-2.5 font-bold text-emerald-700" id="quickDebtVal1">0</span>
+                        <button onclick="adjustDebt('user1', 1)" class="w-7 h-7 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 font-bold text-slate-700">+</button>
+                    </div>
+                    <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1 text-xs">
+                        <span class="px-2 font-semibold text-slate-600" id="quickDebtName2">O:</span>
+                        <button onclick="adjustDebt('user2', -1)" class="w-7 h-7 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 font-bold text-slate-700">-</button>
+                        <span class="px-2.5 font-bold text-rose-700" id="quickDebtVal2">0</span>
+                        <button onclick="adjustDebt('user2', 1)" class="w-7 h-7 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 font-bold text-slate-700">+</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Alt Bölüm: Sayfa Haritası ve Son Okuma Kayıtları -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Sayfa Haritası (sol 2 sütun) -->
+                <div class="lg:col-span-2 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 card-shadow flex flex-col justify-between">
+                    <div>
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                            <div>
+                                <h3 class="font-bold text-base sm:text-lg text-slate-800 flex items-center gap-2">
+                                    <i class="ph-fill ph-grid-four text-emerald-600"></i>
+                                    <span>Kur'an / Meal Sayfa Haritası</span>
+                                </h3>
+                                <p class="text-xs text-slate-500">Hangi sayfanın kim tarafından okunduğunu cüz/bölüm bazında inceleyin.</p>
+                            </div>
+                            <!-- Bölüm / Cüz Seçici -->
+                            <select id="mapChunkSelect" onchange="renderPageMap()" class="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-600">
+                                <!-- JS ile doldurulacak (1-100, 101-200 vb.) -->
+                            </select>
+                        </div>
+
+                        <!-- Renk Açıklamaları (Legend) -->
+                        <div class="flex flex-wrap items-center gap-4 text-xs text-slate-600 mb-4 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                            <span class="flex items-center gap-1.5">
+                                <span class="w-3 h-3 rounded-sm bg-emerald-600 inline-block"></span>
+                                <span id="legendUser1">Ben Okudum</span>
+                            </span>
+                            <span class="flex items-center gap-1.5">
+                                <span class="w-3 h-3 rounded-sm bg-rose-500 inline-block"></span>
+                                <span id="legendUser2">Kız Arkadaşım Okudu</span>
+                            </span>
+                            <span class="flex items-center gap-1.5">
+                                <span class="w-3 h-3 rounded-sm bg-gradient-to-br from-emerald-600 to-rose-500 inline-block"></span>
+                                <span>İkimiz de Okuduk (Ayrı Mod)</span>
+                            </span>
+                            <span class="flex items-center gap-1.5">
+                                <span class="w-3 h-3 rounded-sm bg-slate-200 inline-block"></span>
+                                <span>Okunmadı</span>
+                            </span>
+                        </div>
+
+                        <!-- Kutu Haritası -->
+                        <div id="pageMapGrid" class="grid grid-cols-10 sm:grid-cols-10 gap-1.5 max-h-64 overflow-y-auto p-1">
+                            <!-- JS ile oluşturulacak -->
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs text-slate-400">
+                        <span>Not: Standart Kur'an-ı Kerim 606 sayfadır.</span>
+                        <span id="currentMapRangeInfo">Sayfa 1 - 100</span>
+                    </div>
+                </div>
+
+                <!-- Okuma Geçmişi (sağ 1 sütun) -->
+                <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 card-shadow flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-base sm:text-lg text-slate-800 flex items-center gap-2">
+                                <i class="ph-fill ph-clock-counter-clockwise text-emerald-600"></i>
+                                <span>Son Okumalar</span>
+                            </h3>
+                            <span class="text-xs text-slate-400" id="historyCountBadge">0 Kayıt</span>
+                        </div>
+
+                        <div id="historyList" class="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                            <!-- JS ile doldurulacak -->
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-100 text-center">
+                        <p class="text-[11px] text-slate-400 italic">"Amellerin en hayırlısı, az da olsa devamlı olanıdır." (Hadis-i Şerif)</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+
+    <!-- AYARLAR & MEAL UYARLAMA MODALI -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden animate-fadeIn max-h-[90vh] flex flex-col">
+            
+            <!-- Modal Başlık -->
+            <div class="bg-emerald-900 text-white px-6 py-4 flex justify-between items-center">
+                <div class="flex items-center gap-2.5">
+                    <i class="ph-fill ph-gear text-gold-400 text-xl"></i>
+                    <h3 class="font-bold text-lg">Meal, İsim ve Okuma Ayarları</h3>
+                </div>
+                <button onclick="closeSettingsModal()" class="text-emerald-200 hover:text-white p-1 rounded-lg">
+                    <i class="ph-bold ph-x text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Modal İçerik -->
+            <div class="p-6 overflow-y-auto space-y-5 text-sm">
+                
+                <!-- İsim Ayarları -->
+                <div>
+                    <label class="font-bold text-slate-700 block mb-2">Okuyucu İsimleri</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <span class="text-xs text-slate-500 block mb-1">1. Okuyucu (Sen)</span>
+                            <input type="text" id="inputUser1Name" class="w-full border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-600 font-medium" placeholder="Ben">
+                        </div>
+                        <div>
+                            <span class="text-xs text-slate-500 block mb-1">2. Okuyucu (Kız Arkadaşın)</span>
+                            <input type="text" id="inputUser2Name" class="w-full border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-600 font-medium" placeholder="Kız Arkadaşım">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Meal / Sayfa Sayısı Uyarlama -->
+                <div class="border-t border-slate-100 pt-4">
+                    <label class="font-bold text-slate-700 block mb-1">Kur'an / Meal Sayfa Sayısı Uyarlaması</label>
+                    <p class="text-xs text-slate-500 mb-3">Okuduğunuz mealin veya Mushaf'ın toplam sayfa sayısını seçin veya özel olarak girin.</p>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+                        <button type="button" onclick="selectPresetPages(606, 'Standart Kur\'an (606 Syf)')" class="text-xs border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-semibold py-2 px-3 rounded-xl transition text-left">
+                            📖 606 Sayfa<br><span class="text-[10px] font-normal text-emerald-700">Diyanet / Hatim Mushafları</span>
+                        </button>
+                        <button type="button" onclick="selectPresetPages(604, 'Medine Mushafı (604 Syf)')" class="text-xs border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 font-semibold py-2 px-3 rounded-xl transition text-left">
+                            🕋 604 Sayfa<br><span class="text-[10px] font-normal text-slate-500">Standart Medine Hattı</span>
+                        </button>
+                        <button type="button" onclick="selectPresetPages(590, 'Kısa Meal (590 Syf)')" class="text-xs border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 font-semibold py-2 px-3 rounded-xl transition text-left">
+                            📘 Özel Meal<br><span class="text-[10px] font-normal text-slate-500">Farklı Baskı Boyutu</span>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3 items-center bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <div class="col-span-2">
+                            <span class="text-xs font-medium text-slate-700 block">Kitap / Meal Adı:</span>
+                            <input type="text" id="inputBookTitle" class="w-full mt-1 border border-slate-300 bg-white rounded-lg px-2.5 py-1.5 text-xs font-medium" placeholder="Örn: Kur'an-ı Kerim Meali">
+                        </div>
+                        <div>
+                            <span class="text-xs font-medium text-slate-700 block">Toplam Sayfa:</span>
+                            <input type="number" id="inputTotalPages" min="50" max="2000" class="w-full mt-1 border border-slate-300 bg-white rounded-lg px-2.5 py-1.5 text-xs font-bold text-emerald-800" value="606">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Okuma Paylaşım Modu -->
+                <div class="border-t border-slate-100 pt-4">
+                    <label class="font-bold text-slate-700 block mb-1">Birlikte Okuma Modu</label>
+                    <p class="text-xs text-slate-500 mb-2.5">Sayfaları sırayla paylaşarak tek bir kitabı mı bitireceksiniz, yoksa ikiniz de kendi kitabınızdan tüm sayfaları (1'den 606'ya kadar) ayrı ayrı mı okuyacaksınız?</p>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <label class="border border-slate-200 rounded-xl p-3 flex items-start gap-2.5 cursor-pointer hover:bg-slate-50 transition">
+                            <input type="radio" name="readingMode" value="shared" class="mt-1 accent-emerald-700" checked>
+                            <div>
+                                <span class="font-bold text-slate-800 text-xs block">Ortak Hatim (Paylaşımlı)</span>
+                                <span class="text-[11px] text-slate-500 leading-tight block mt-0.5">Sen 1. sayfayı, o 2. sayfayı okur. Toplam 606 sayfa birlikte biter (Kişi başı 303 syf).</span>
+                            </div>
+                        </label>
+                        <label class="border border-slate-200 rounded-xl p-3 flex items-start gap-2.5 cursor-pointer hover:bg-slate-50 transition">
+                            <input type="radio" name="readingMode" value="individual" class="mt-1 accent-emerald-700">
+                            <div>
+                                <span class="font-bold text-slate-800 text-xs block">Bireysel Tam Hatim (Ayrı)</span>
+                                <span class="text-[11px] text-slate-500 leading-tight block mt-0.5">İkiniz de 1. sayfadan başlar, 606. sayfaya kadar tüm meali eksiksiz okursunuz.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Veri Yedekleme & Sıfırlama -->
+                <div class="border-t border-slate-100 pt-4">
+                    <label class="font-bold text-slate-700 block mb-2">Yedekleme & Cihazlar Arası Aktarım</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="exportData()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-2 rounded-lg flex items-center gap-1.5 transition">
+                            <i class="ph-bold ph-copy"></i> İlerleme Kodunu Kopyala
+                        </button>
+                        <button type="button" onclick="toggleImportBox()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-2 rounded-lg flex items-center gap-1.5 transition">
+                            <i class="ph-bold ph-download-simple"></i> Kod Yükle
+                        </button>
+                        <button type="button" onclick="confirmReset()" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-700 font-medium px-3 py-2 rounded-lg flex items-center gap-1.5 ml-auto transition">
+                            <i class="ph-bold ph-trash"></i> Tümünü Sıfırla
+                        </button>
+                    </div>
+
+                    <!-- Yedek Kodu Yükleme Alanı -->
+                    <div id="importBox" class="hidden mt-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <p class="text-xs text-slate-600 mb-1.5">Diğer cihazdan kopyaladığınız yedek kodunu buraya yapıştırın:</p>
+                        <div class="flex gap-2">
+                            <input type="text" id="importInput" class="flex-1 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs" placeholder="Yedek kodunu yapıştırın...">
+                            <button type="button" onclick="importData()" class="bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">Yükle</button>
+                        </div>
+                    </div>
+
+                    <!-- Sıfırlama Onay Kutusu (Alert yerine özel UI) -->
+                    <div id="resetConfirmBox" class="hidden mt-3 bg-rose-50 p-3 rounded-xl border border-rose-200 flex items-center justify-between">
+                        <span class="text-xs text-rose-800 font-medium">Tüm okuma geçmişi silinecek. Emin misiniz?</span>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="resetAllData()" class="bg-rose-600 text-white text-xs font-bold px-3 py-1 rounded-lg">Evet, Sıfırla</button>
+                            <button type="button" onclick="document.getElementById('resetConfirmBox').classList.add('hidden')" class="bg-white text-slate-600 text-xs font-semibold px-2.5 py-1 rounded-lg border">İptal</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Alt Butonlar -->
+            <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 flex justify-end gap-2">
+                <button type="button" onclick="closeSettingsModal()" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-200 transition">Vazgeç</button>
+                <button type="button" onclick="saveSettings()" class="px-5 py-2 rounded-xl text-sm font-semibold bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm transition">Ayarları Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BİLDİRİM TOAST MESAJI -->
+    <div id="toastBox" class="fixed bottom-5 right-5 z-50 hidden bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 flex items-center gap-3 text-sm max-w-sm transition-all">
+        <i id="toastIcon" class="ph-fill ph-check-circle text-emerald-400 text-xl shrink-0"></i>
+        <span id="toastMessage">İşlem başarılı!</span>
+    </div>
+
+    <!-- UYGULAMA MANTIĞI (JAVASCRIPT) -->
+    <script>
+        const STORAGE_KEY = 'huzur_hatmi_kuran_takip_v1';
+
+        // Bugünün tarihini YYYY-MM-DD formatında yerel saatle al
+        function getTodayStr() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // İki YYYY-MM-DD tarih arasındaki tam gün farkını hesapla
+        function getDaysDiff(dateStr1, dateStr2) {
+            const d1 = new Date(dateStr1 + 'T00:00:00');
+            const d2 = new Date(dateStr2 + 'T00:00:00');
+            const diffTime = d2 - d1;
+            return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        // Varsayılan uygulama durumu
+        function getDefaultState() {
+            const today = getTodayStr();
+            return {
+                config: {
+                    totalPages: 606,
+                    bookTitle: "Standart Kur'an (606 Sayfa)",
+                    mode: 'shared', // 'shared' (ortak) veya 'individual' (ayrı ayrı 606 sayfa)
+                    startDate: today,
+                },
+                lastActiveDate: today,
+                simulatedOffsetDays: 0, // Test/Manuel gün atlama için
+                users: {
+                    user1: {
+                        name: 'Ben',
+                        totalRead: 0,
+                        debt: 0,         // Maksimum 2 olabilir
+                        readToday: 0,    // Bugün okuduğu sayfa (Maks 1 + başlangıç borcu, yani maks 3)
+                        quotaToday: 1,   // Güne başlarken sahip olduğu toplam hak (1 günlük + borç, maks 3)
+                        pagesReadList: [] // Okuduğu sayfa numaraları
+                    },
+                    user2: {
+                        name: 'Kız Arkadaşım',
+                        totalRead: 0,
+                        debt: 0,
+                        readToday: 0,
+                        quotaToday: 1,
+                        pagesReadList: []
+                    }
+                },
+                history: [] // { id, date, time, userKey, pageNumber, wasDebt }
+            };
+        }
+
+        let appState = loadState();
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return getDefaultState();
+                const parsed = JSON.parse(raw);
+                // Eksik alan kontrolü
+                if (!parsed.config || !parsed.users) return getDefaultState();
+                return parsed;
+            } catch (e) {
+                console.error("Veri okuma hatası:", e);
+                return getDefaultState();
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                console.error("Veri kaydetme hatası:", e);
+            }
+        }
+
+        // Gün değişimini kontrol et ve atlanan günleri borç olarak ekle (Maksimum 2 borç kuralı!)
+        function checkDayRollover() {
+            const realToday = getTodayStr();
+            const daysPassed = getDaysDiff(appState.lastActiveDate, realToday);
+
+            if (daysPassed > 0) {
+                applyDaysRollover(daysPassed);
+                appState.lastActiveDate = realToday;
+                saveState();
+            }
+        }
+
+        // Belirtilen gün sayısı kadar ileri sar ve borçları hesapla
+        function applyDaysRollover(daysCount) {
+            let overflowWarning = false;
+
+            ['user1', 'user2'].forEach(uKey => {
+                const u = appState.users[uKey];
+                
+                // Geçen her gün için kontrol:
+                // İlk geçen gün (dün): Eğer dün günlük 1 sayfasını okumadıysa borç +1 artar.
+                // (Not: Dün fazladan okuma yaptıysa zaten readPage içinde debt düşülmüştü)
+                for (let d = 0; d < daysCount; d++) {
+                    if (d === 0) {
+                        // Son aktif olunan günde hiç okumadıysa (readToday === 0), o günün 1 sayfası borca dönüşür
+                        if (u.readToday === 0) {
+                            u.debt += 1;
+                        }
+                    } else {
+                        // Aradaki tamamen girilmeyen tam günler doğrudan +1 borç ekler
+                        u.debt += 1;
+                    }
+
+                    // KURAL: En fazla 2 gün atlatılabilir (Maksimum 2 sayfa borç birikebilir)
+                    if (u.debt > 2) {
+                        u.debt = 2;
+                        overflowWarning = true;
+                    }
+
+                    // Yeni güne geçildiği için readToday sıfırlanır
+                    u.readToday = 0;
+                }
+
+                // Yeni günün toplam okuma kotası = 1 (bugünün hakkı) + mevcut borç (maks 2) = Maksimum 3 sayfa
+                u.quotaToday = Math.min(3, 1 + u.debt);
+            });
+
+            if (overflowWarning) {
+                showWarningBanner(
+                    "Maksimum Gün Atlama Sınırına Ulaşıldı!",
+                    "En fazla 2 gün atlama kuralı gereği biriken borçlar kişi başı maksimum 2 sayfada (bugünküyle birlikte toplam 3 sayfada) sabitlendi. Lütfen bugün biriken sayfalarınızı okuyun."
+                );
+            }
+        }
+
+        // Uyarı bandını göster
+        function showWarningBanner(title, desc) {
+            const banner = document.getElementById('WarningBanner');
+            document.getElementById('warningTitle').textContent = title;
+            document.getElementById('warningDesc').textContent = desc;
+            banner.classList.remove('hidden');
+        }
+
+        // Sıradaki okunacak sayfayı hesapla
+        function getNextPageForUser(userKey) {
+            const totalPages = appState.config.totalPages;
+            const u1 = appState.users.user1;
+            const u2 = appState.users.user2;
+
+            if (appState.config.mode === 'individual') {
+                // Bireysel modda herkes kendi sıradaki sayfasını okur (1, 2, 3...)
+                const nextP = appState.users[userKey].totalRead + 1;
+                return nextP <= totalPages ? nextP : totalPages;
+            } else {
+                // Ortak Hatim Modu:
+                // Okunmamış en küçük sayfayı bul. Ancak iki kullanıcı aynı anda ekrana baktığında
+                // aynı sayfayı görmemeleri için: user1 sıradaki ilk boş sayfayı, user2 ise (eğer user1 henüz okumadıysa)
+                // bir sonraki boş sayfayı görsün veya doğrudan sıradaki ortak sayfayı okusun.
+                const allReadSet = new Set([...u1.pagesReadList, ...u2.pagesReadList]);
+                let unassignedPages = [];
+                for (let p = 1; p <= totalPages; p++) {
+                    if (!allReadSet.has(p)) {
+                        unassignedPages.push(p);
+                    }
+                    if (unassignedPages.length >= 2) break;
+                }
+
+                if (unassignedPages.length === 0) return totalPages; // Bitti
+                if (userKey === 'user1') {
+                    return unassignedPages[0];
+                } else {
+                    // Eğer 2. kullanıcı için; 1. kullanıcının bugün hala okuyacağı kota varsa 2. boş sayfayı öner,
+                    // yoksa 1. boş sayfayı öner ki çakışmasınlar.
+                    const u1CanStillReadToday = u1.readToday < u1.quotaToday;
+                    if (u1CanStillReadToday && unassignedPages.length > 1) {
+                        return unassignedPages[1];
+                    }
+                    return unassignedPages[0];
+                }
+            }
+        }
+
+        // Sayfanın hangi cüzde olduğunu yaklaşık olarak hesapla (606 veya özel sayfa sayısına uyumlu)
+        function getJuzInfo(pageNumber, totalPages) {
+            if (pageNumber > totalPages) return "Hatim Tamamlandı";
+            // Standart Kur'an'da 30 cüz vardır
+            const juz = Math.min(30, Math.ceil((pageNumber / totalPages) * 30));
+            return `${juz}. Cüz • Sayfa ${pageNumber}`;
+        }
+
+        // 1 Sayfa Okuma İşlemi
+        function readPage(userKey) {
+            const u = appState.users[userKey];
+            const totalPages = appState.config.totalPages;
+
+            // Kitap bitti mi kontrolü
+            if (appState.config.mode === 'shared') {
+                const totalCombined = appState.users.user1.totalRead + appState.users.user2.totalRead;
+                if (totalCombined >= totalPages) {
+                    showToast("Tebrikler! Ortak hatminiz tamamlandı.", "ph-confetti");
+                    return;
+                }
+            } else {
+                if (u.totalRead >= totalPages) {
+                    showToast(`${u.name} tüm sayfaları tamamladı!`, "ph-confetti");
+                    return;
+                }
+            }
+
+            // Günlük maksimum sınır (Kota) kontrolü (1 güncel + maks 2 borç = maks 3)
+            if (u.readToday >= u.quotaToday) {
+                showToast("Bugünkü okuma kotanı (ve varsa borçlarını) tamamen doldurdun!", "ph-info");
+                return;
+            }
+
+            const pageToRead = getNextPageForUser(userKey);
+
+            // Bu okuma günlük ödev mi yoksa geçmiş borç telafisi mi?
+            // İlk okunan sayfa (readToday === 0) bugünün normal sayfasıdır,
+            // 2. ve 3. okunan sayfalar (readToday >= 1) devreden borçtan düşer.
+            let wasDebt = false;
+            if (u.readToday >= 1 && u.debt > 0) {
+                u.debt = Math.max(0, u.debt - 1);
+                wasDebt = true;
+            }
+
+            u.readToday += 1;
+            u.totalRead += 1;
+            if (!u.pagesReadList.includes(pageToRead)) {
+                u.pagesReadList.push(pageToRead);
+            }
+
+            // Geçmişe kaydet
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+            appState.history.unshift({
+                id: Date.now() + Math.random(),
+                date: getTodayStr(),
+                time: timeStr,
+                userKey: userKey,
+                pageNumber: pageToRead,
+                wasDebt: wasDebt
+            });
+
+            // Geçmişi maksimum 100 kayıtla sınırla
+            if (appState.history.length > 100) {
+                appState.history.pop();
+            }
+
+            saveState();
+            renderAll();
+
+            const msg = wasDebt 
+                ? `${u.name}: ${pageToRead}. sayfa okundu (1 gün borç düşüldü!)`
+                : `${u.name}: Bugünün görevi olan ${pageToRead}. sayfa okundu!`;
+            showToast(msg, "ph-check-circle");
+        }
+
+        // Son Okumayı Geri Al
+        function undoPage(userKey) {
+            const u = appState.users[userKey];
+            if (u.readToday <= 0) {
+                showToast("Bugün geri alınacak bir okuma bulunmuyor.", "ph-warning");
+                return;
+            }
+
+            // Geçmişten bu kullanıcının son kaydını bul
+            const histIdx = appState.history.findIndex(h => h.userKey === userKey);
+            let removedPage = null;
+            let wasDebt = false;
+
+            if (histIdx !== -1) {
+                removedPage = appState.history[histIdx].pageNumber;
+                wasDebt = appState.history[histIdx].wasDebt;
+                appState.history.splice(histIdx, 1);
+            }
+
+            u.readToday = Math.max(0, u.readToday - 1);
+            u.totalRead = Math.max(0, u.totalRead - 1);
+
+            if (removedPage !== null) {
+                u.pagesReadList = u.pagesReadList.filter(p => p !== removedPage);
+            } else {
+                u.pagesReadList.pop();
+            }
+
+            if (wasDebt) {
+                u.debt = Math.min(2, u.debt + 1);
+            }
+
+            saveState();
+            renderAll();
+            showToast(`${u.name} için son okuma geri alındı.`, "ph-arrow-u-up-left");
+        }
+
+        // Manuel Borç Artırma / Azaltma (Maksimum 2 borç sınırı ile)
+        function adjustDebt(userKey, delta) {
+            const u = appState.users[userKey];
+            const newDebt = u.debt + delta;
+
+            if (newDebt < 0) {
+                showToast("Borç 0'dan küçük olamaz.", "ph-info");
+                return;
+            }
+            if (newDebt > 2) {
+                showToast("Kural gereği en fazla 2 gün (2 sayfa) borç birikebilir! Bir günde toplam en fazla 3 sayfa okunabilir.", "ph-warning");
+                return;
+            }
+
+            u.debt = newDebt;
+            // Günlük toplam kotayı güncelle: 1 (günlük) + şu anki borç + bugün zaten ödenmiş borçlar (Maks 3)
+            const paidDebtToday = Math.max(0, u.readToday - 1);
+            u.quotaToday = Math.min(3, 1 + u.debt + paidDebtToday);
+
+            saveState();
+            renderAll();
+            showToast(`${u.name} güncel borcu: ${u.debt} sayfa olarak ayarlandı.`, "ph-scales");
+        }
+
+        // 1 Gün İleri Sar / Gün Atlama Simülasyonu
+        function simulateMissedDay() {
+            applyDaysRollover(1);
+            appState.simulatedOffsetDays = (appState.simulatedOffsetDays || 0) + 1;
+            saveState();
+            renderAll();
+            showToast("Yeni güne geçildi! Okunmayan sayfalar borç olarak devredildi (Maks 2 borç).", "ph-calendar-plus");
+        }
+
+        // Arayüzü tamamen güncelle
+        function renderAll() {
+            const cfg = appState.config;
+            const u1 = appState.users.user1;
+            const u2 = appState.users.user2;
+
+            // Üst Tarih Gösterimi
+            const now = new Date();
+            if (appState.simulatedOffsetDays > 0) {
+                now.setDate(now.getDate() + appState.simulatedOffsetDays);
+            }
+            const dateFormatted = now.toLocaleDateString('tr-TR', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
+            document.getElementById('headerDateDisplay').textContent = dateFormatted + (appState.simulatedOffsetDays > 0 ? ` (+${appState.simulatedOffsetDays} Gün İleri Sarıldı)` : '');
+
+            // Kitap ve Mod Bilgileri
+            document.getElementById('bookTypeBadge').textContent = `${cfg.bookTitle} (${cfg.totalPages} Sayfa)`;
+            if (cfg.mode === 'shared') {
+                document.getElementById('modeExplanationText').textContent = `Ortak Hatim Modu: İkinizin okuduğu sayfalar birleşerek ${cfg.totalPages} sayfalık hedefi tamamlar.`;
+            } else {
+                document.getElementById('modeExplanationText').textContent = `Bireysel Tam Meal Modu: İkiniz de 1'den ${cfg.totalPages}. sayfaya kadar ayrı ayrı tüm kitabı okursunuz.`;
+            }
+
+            // Genel İlerleme Hesaplama
+            let totalReadCount = 0;
+            let totalTargetCount = cfg.totalPages;
+
+            if (cfg.mode === 'shared') {
+                totalReadCount = Math.min(cfg.totalPages, u1.totalRead + u2.totalRead);
+                totalTargetCount = cfg.totalPages;
+            } else {
+                totalReadCount = Math.min(cfg.totalPages * 2, u1.totalRead + u2.totalRead);
+                totalTargetCount = cfg.totalPages * 2;
+            }
+
+            const pct = totalTargetCount > 0 ? Math.min(100, ((totalReadCount / totalTargetCount) * 100)).toFixed(1) : 0;
+            document.getElementById('totalReadDisplay').textContent = totalReadCount;
+            document.getElementById('totalTargetDisplay').textContent = totalTargetCount;
+            document.getElementById('percentageDisplay').textContent = `%${pct} Tamamlandı`;
+            document.getElementById('mainProgressBar').style.width = `${pct}%`;
+
+            // Alt İstatistikler
+            const startD = new Date(cfg.startDate + 'T00:00:00');
+            document.getElementById('statStartDate').textContent = startD.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
+            const passedDays = Math.max(1, getDaysDiff(cfg.startDate, getTodayStr()) + 1 + (appState.simulatedOffsetDays || 0));
+            document.getElementById('statDaysPassed').textContent = `${passedDays}. Gün`;
+
+            const remainingPages = Math.max(0, totalTargetCount - totalReadCount);
+            document.getElementById('statRemainingPages').textContent = `${remainingPages} Sayfa`;
+
+            // Günde toplam 2 sayfa (1 ben + 1 o) okunduğu varsayımıyla kalan gün
+            const daysNeeded = Math.ceil(remainingPages / 2);
+            if (remainingPages === 0) {
+                document.getElementById('statEstFinish').textContent = "Tamamlandı! 🎉";
+            } else {
+                const finishDate = new Date(now);
+                finishDate.setDate(finishDate.getDate() + daysNeeded);
+                document.getElementById('statEstFinish').textContent = `${daysNeeded} Gün (${finishDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })})`;
+            }
+
+            // Kullanıcı Kartlarını Render Et
+            renderUserCard('user1', 'emerald');
+            renderUserCard('user2', 'rose');
+
+            // Hızlı Borç Çubuğu
+            document.getElementById('quickDebtName1').textContent = u1.name + ':';
+            document.getElementById('quickDebtVal1').textContent = u1.debt + ' Borç';
+            document.getElementById('quickDebtName2').textContent = u2.name + ':';
+            document.getElementById('quickDebtVal2').textContent = u2.debt + ' Borç';
+
+            // Sayfa Haritası Seçicisini ve Grid'i Güncelle
+            populateMapSelector();
+            renderPageMap();
+
+            // Son Okumalar Listesi
+            renderHistory();
+        }
+
+        // Tekil Kullanıcı Kartı Güncellemesi
+        function renderUserCard(userKey, themeColor) {
+            const u = appState.users[userKey];
+            const totalPages = appState.config.totalPages;
+
+            // Kota kontrolü
+            const paidDebtToday = Math.max(0, u.readToday - 1);
+            u.quotaToday = Math.min(3, 1 + u.debt + paidDebtToday);
+
+            document.getElementById(`${userKey}NameDisplay`).textContent = u.name;
+            document.getElementById(`${userKey}TotalRead`).textContent = u.totalRead;
+
+            // Sıradaki sayfa
+            const nextPage = getNextPageForUser(userKey);
+            document.getElementById(`${userKey}NextPage`).textContent = `${nextPage}. Sayfa`;
+            document.getElementById(`${userKey}JuzInfo`).textContent = getJuzInfo(nextPage, totalPages);
+
+            // Durum Rozeti
+            const badgeEl = document.getElementById(`${userKey}StatusBadge`);
+            if (u.readToday >= u.quotaToday) {
+                badgeEl.textContent = "Bugün Tamamlandı ✓";
+                badgeEl.className = "text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200";
+            } else if (u.readToday > 0) {
+                badgeEl.textContent = `${u.debt} Borç Kaldı`;
+                badgeEl.className = "text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 border border-blue-200";
+            } else if (u.debt > 0) {
+                badgeEl.textContent = `1 Güncel + ${u.debt} Borç`;
+                badgeEl.className = "text-xs font-semibold px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-200";
+            } else {
+                badgeEl.textContent = "Bugün 1 Sayfa";
+                badgeEl.className = "text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200";
+            }
+
+            // Kota Metni
+            document.getElementById(`${userKey}QuotaText`).textContent = `${u.readToday} / ${u.quotaToday} Sayfa Okundu`;
+
+            // Borç Metni
+            const debtEl = document.getElementById(`${userKey}DebtBadge`);
+            if (u.debt === 0) {
+                debtEl.textContent = "0 Sayfa (Borç Yok)";
+                debtEl.className = "font-bold text-emerald-700";
+            } else if (u.debt === 1) {
+                debtEl.textContent = "1 Gün (1 Sayfa Borç)";
+                debtEl.className = "font-bold text-amber-600";
+            } else {
+                debtEl.textContent = "2 Gün (Maksimum Borç Sınırı!)";
+                debtEl.className = "font-bold text-rose-600";
+            }
+
+            // 3'lü Slotları Oluştur (1. Slot: Bugünün Sayfası, 2. Slot: 1. Borç, 3. Slot: 2. Borç)
+            const slotsContainer = document.getElementById(`${userKey}SlotsContainer`);
+            slotsContainer.innerHTML = '';
+
+            const slotTitles = ["Bugünün Sayfası", "1. Gün Borcu", "2. Gün Borcu"];
+            for (let i = 0; i < 3; i++) {
+                const isSlotActive = i < u.quotaToday; // Bu slot bugün aktif mi?
+                const isSlotDone = i < u.readToday;    // Bu slot bugün okundu mu?
+
+                let boxClass = "";
+                let iconHtml = "";
+                let statusText = "";
+
+                if (isSlotDone) {
+                    boxClass = themeColor === 'emerald' 
+                        ? "bg-emerald-50 border-emerald-300 text-emerald-900" 
+                        : "bg-rose-50 border-rose-300 text-rose-900";
+                    iconHtml = `<i class="ph-fill ph-check-circle text-lg ${themeColor === 'emerald' ? 'text-emerald-600' : 'text-rose-600'}"></i>`;
+                    statusText = "Okundu";
+                } else if (isSlotActive) {
+                    boxClass = "bg-amber-50/70 border-amber-300 text-amber-900 border-dashed";
+                    iconHtml = `<i class="ph-duotone ph-book-open text-lg text-amber-600"></i>`;
+                    statusText = i === 0 ? "Bekliyor (1 Syf)" : "Borç (1 Syf)";
+                } else {
+                    boxClass = "bg-slate-50 border-slate-200/70 text-slate-400 opacity-60";
+                    iconHtml = `<i class="ph ph-lock-simple text-lg text-slate-300"></i>`;
+                    statusText = "Borç Yok";
+                }
+
+                slotsContainer.innerHTML += `
+                    <div class="border rounded-xl p-2.5 flex flex-col justify-between transition-all ${boxClass}">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase tracking-tight">${slotTitles[i]}</span>
+                            ${iconHtml}
+                        </div>
+                        <span class="text-xs font-semibold mt-1.5 block">${statusText}</span>
+                    </div>
+                `;
+            }
+
+            // Buton Durumları
+            const readBtn = document.getElementById(`${userKey}ReadBtn`);
+            const readBtnText = document.getElementById(`${userKey}ReadBtnText`);
+            const undoBtn = document.getElementById(`${userKey}UndoBtn`);
+
+            undoBtn.disabled = u.readToday <= 0;
+
+            if (u.readToday >= u.quotaToday) {
+                readBtn.disabled = true;
+                readBtnText.textContent = `Günlük Sınır Doldu (${u.readToday}/${u.quotaToday})`;
+            } else {
+                readBtn.disabled = false;
+                if (u.readToday === 0) {
+                    readBtnText.textContent = `${nextPage}. Sayfayı Okudum (Bugün)`;
+                } else {
+                    readBtnText.textContent = `${nextPage}. Sayfayı Okudum (Borç Telafisi)`;
+                }
+            }
+        }
+
+        // Sayfa Haritası Seçiciyi (1-100, 101-200...) Doldur
+        function populateMapSelector() {
+            const select = document.getElementById('mapChunkSelect');
+            const total = appState.config.totalPages;
+            const currentVal = select.value || "1";
+            select.innerHTML = '';
+
+            const chunkSize = 100;
+            const chunks = Math.ceil(total / chunkSize);
+
+            for (let c = 0; c < chunks; c++) {
+                const start = c * chunkSize + 1;
+                const end = Math.min(total, (c + 1) * chunkSize);
+                const opt = document.createElement('option');
+                opt.value = start;
+                opt.textContent = `Sayfa ${start} - ${end}`;
+                select.appendChild(opt);
+            }
+
+            // Eğer önceki seçili değer hala mevcutsa koru
+            if ([...select.options].some(o => o.value === currentVal)) {
+                select.value = currentVal;
+            }
+        }
+
+        // Sayfa Haritası Kutu Görünümünü Çiz
+        function renderPageMap() {
+            const select = document.getElementById('mapChunkSelect');
+            const startPage = parseInt(select.value || "1", 10);
+            const total = appState.config.totalPages;
+            const endPage = Math.min(total, startPage + 99);
+
+            document.getElementById('legendUser1').textContent = `${appState.users.user1.name} Okudu`;
+            document.getElementById('legendUser2').textContent = `${appState.users.user2.name} Okudu`;
+            document.getElementById('currentMapRangeInfo').textContent = `Gösterilen: Sayfa ${startPage} - ${endPage} (Toplam ${total})`;
+
+            const u1Set = new Set(appState.users.user1.pagesReadList);
+            const u2Set = new Set(appState.users.user2.pagesReadList);
+
+            const grid = document.getElementById('pageMapGrid');
+            grid.innerHTML = '';
+
+            for (let p = startPage; p <= endPage; p++) {
+                const r1 = u1Set.has(p);
+                const r2 = u2Set.has(p);
+
+                let bgClass = "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200";
+                let titleText = `Sayfa ${p}: Henüz okunmadı`;
+
+                if (r1 && r2) {
+                    bgClass = "bg-gradient-to-br from-emerald-600 to-rose-500 text-white border-transparent font-bold shadow-xs";
+                    titleText = `Sayfa ${p}: İkiniz de okudunuz`;
+                } else if (r1) {
+                    bgClass = "bg-emerald-600 text-white border-emerald-700 font-semibold shadow-xs";
+                    titleText = `Sayfa ${p}: ${appState.users.user1.name} okudu`;
+                } else if (r2) {
+                    bgClass = "bg-rose-500 text-white border-rose-600 font-semibold shadow-xs";
+                    titleText = `Sayfa ${p}: ${appState.users.user2.name} okudu`;
+                }
+
+                const cell = document.createElement('div');
+                cell.className = `h-8 rounded-lg border text-xs flex items-center justify-center select-none transition ${bgClass}`;
+                cell.textContent = p;
+                cell.title = titleText;
+                grid.appendChild(cell);
+            }
+        }
+
+        // Son Okumalar Geçmişini Çiz
+        function renderHistory() {
+            const listEl = document.getElementById('historyList');
+            const badgeEl = document.getElementById('historyCountBadge');
+            const hist = appState.history;
+
+            badgeEl.textContent = `${hist.length} Kayıt`;
+
+            if (hist.length === 0) {
+                listEl.innerHTML = `
+                    <div class="text-center py-8 text-slate-400">
+                        <i class="ph-duotone ph-book-open-text text-4xl mb-2 block mx-auto"></i>
+                        <p class="text-xs">Henüz okuma kaydı bulunmuyor.<br>İlk sayfanızı okuyarak başlayın!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = '';
+            hist.slice(0, 25).forEach(item => {
+                const isU1 = item.userKey === 'user1';
+                const uName = appState.users[item.userKey]?.name || (isU1 ? 'Ben' : 'Kız Arkadaşım');
+                const colorBadge = isU1 
+                    ? 'bg-emerald-100 text-emerald-800 border-emerald-200' 
+                    : 'bg-rose-100 text-rose-800 border-rose-200';
+
+                const debtTag = item.wasDebt 
+                    ? `<span class="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-medium">Borç Telafisi</span>` 
+                    : `<span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium">Günlük</span>`;
+
+                listEl.innerHTML += `
+                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+                        <div class="flex items-center gap-2.5">
+                            <span class="font-bold px-2 py-1 rounded-lg border ${colorBadge}">${uName}</span>
+                            <div>
+                                <span class="font-bold text-slate-800 block">${item.pageNumber}. Sayfa Okundu</span>
+                                <span class="text-[11px] text-slate-400">${item.date} • ${item.time}</span>
+                            </div>
+                        </div>
+                        ${debtTag}
+                    </div>
+                `;
+            });
+        }
+
+        // AYARLAR MODALI İŞLEMLERİ
+        function openSettingsModal() {
+            document.getElementById('inputUser1Name').value = appState.users.user1.name;
+            document.getElementById('inputUser2Name').value = appState.users.user2.name;
+            document.getElementById('inputBookTitle').value = appState.config.bookTitle;
+            document.getElementById('inputTotalPages').value = appState.config.totalPages;
+
+            const radios = document.getElementsByName('readingMode');
+            radios.forEach(r => {
+                r.checked = (r.value === appState.config.mode);
+            });
+
+            document.getElementById('settingsModal').classList.remove('hidden');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.add('hidden');
+            document.getElementById('importBox').classList.add('hidden');
+            document.getElementById('resetConfirmBox').classList.add('hidden');
+        }
+
+        function selectPresetPages(pages, title) {
+            document.getElementById('inputTotalPages').value = pages;
+            document.getElementById('inputBookTitle').value = title;
+        }
+
+        function saveSettings() {
+            const name1 = document.getElementById('inputUser1Name').value.trim() || 'Ben';
+            const name2 = document.getElementById('inputUser2Name').value.trim() || 'Kız Arkadaşım';
+            const bookTitle = document.getElementById('inputBookTitle').value.trim() || 'Kur\'an-ı Kerim Meali';
+            let totalPages = parseInt(document.getElementById('inputTotalPages').value, 10);
+
+            if (isNaN(totalPages) || totalPages < 20) totalPages = 606;
+            if (totalPages > 5000) totalPages = 5000;
+
+            let selectedMode = 'shared';
+            const radios = document.getElementsByName('readingMode');
+            radios.forEach(r => {
+                if (r.checked) selectedMode = r.value;
+            });
+
+            appState.users.user1.name = name1;
+            appState.users.user2.name = name2;
+            appState.config.bookTitle = bookTitle;
+            appState.config.totalPages = totalPages;
+            appState.config.mode = selectedMode;
+
+            saveState();
+            renderAll();
+            closeSettingsModal();
+            showToast("Meal ve kullanıcı ayarları güncellendi!", "ph-check-circle");
+        }
+
+        // YEDEKLEME VE AKTARIM (Clipboard)
+        function exportData() {
+            const encoded = btoa(encodeURIComponent(JSON.stringify(appState)));
+            const tempInput = document.createElement('textarea');
+            tempInput.value = encoded;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast("İlerleme yedek kodu panoya kopyalandı! Kız arkadaşına gönderebilirsin.", "ph-copy");
+        }
+
+        function toggleImportBox() {
+            const box = document.getElementById('importBox');
+            box.classList.toggle('hidden');
+        }
+
+        function importData() {
+            const rawCode = document.getElementById('importInput').value.trim();
+            if (!rawCode) {
+                showToast("Lütfen geçerli bir yedek kodu yapıştırın.", "ph-warning");
+                return;
+            }
+            try {
+                const decoded = JSON.parse(decodeURIComponent(atob(rawCode)));
+                if (decoded && decoded.config && decoded.users) {
+                    appState = decoded;
+                    saveState();
+                    renderAll();
+                    closeSettingsModal();
+                    showToast("Yedek başarıyla yüklendi!", "ph-check-circle");
+                } else {
+                    showToast("Geçersiz yedek kodu formatı.", "ph-warning");
+                }
+            } catch (e) {
+                showToast("Yedek kodu çözümlenemedi. Lütfen eksiksiz kopyaladığınızdan emin olun.", "ph-warning");
+            }
+        }
+
+        function confirmReset() {
+            document.getElementById('resetConfirmBox').classList.remove('hidden');
+        }
+
+        function resetAllData() {
+            appState = getDefaultState();
+            saveState();
+            renderAll();
+            closeSettingsModal();
+            document.getElementById('WarningBanner').classList.add('hidden');
+            showToast("Tüm veriler sıfırlandı, tertemiz bir başlangıç yapıldı.", "ph-trash");
+        }
+
+        // TOAST BİLDİRİM FONKSİYONU
+        let toastTimer = null;
+        function showToast(message, iconClass = "ph-check-circle") {
+            const box = document.getElementById('toastBox');
+            const icon = document.getElementById('toastIcon');
+            const msg = document.getElementById('toastMessage');
+
+            msg.textContent = message;
+            icon.className = `ph-fill ${iconClass} text-emerald-400 text-xl shrink-0`;
+            box.classList.remove('hidden');
+
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                box.classList.add('hidden');
+            }, 3500);
+        }
+
+        // Başlangıçta çalıştır
+        window.onload = function() {
+            checkDayRollover();
+            renderAll();
+        };
+    </script>
+</body>
+</html>
